@@ -1,27 +1,63 @@
-# RxjsUnsubscribe
+# RxJSUnsubscribe
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 7.1.4.
+> Always unsubscribe your RxJS calls
 
-## Development server
+## Run it yourself (Angular-based example)
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+```
+npm run api
+npm run start
+```
 
-## Code scaffolding
+_API returns Date.now() with 15 seconds delay on http://localhost:3000_
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+Check it out on http://localhost:4200
 
-## Build
+**Result**
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
+```
+[Bar] Loaded
+[Bar] Destroyed
+[Foo] Loaded
+[Bar-bad] Response: 1546201734221
+[Foo-good] Response: 1546201757711
+[Foo-bad] Response: 1546201757711
+```
 
-## Running unit tests
+## Good
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+Unsubscribe HTTP calls on unload. **Why?** We don't care about the HTTP response anymore. Hence, 
+it's a memory leak.
 
-## Running end-to-end tests
+```
+// On load / during execution
+subject = new Subject<void>();
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
+this.http.get('//localhost:3000').pipe(
+  takeUntil(this.subject),
+).subscribe((val) => {
+  console.info(`[Foo-good] Response: ${val}`);
+});
 
-## Further help
+// On unload
+this.subject.next();
+this.subject.complete();
+```
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+## Bad
+
+HTTP calls were never unsubscribed. Generally, HTTP calls do resolve pretty quickly, but timeouts
+will lead to memory leaks.
+
+Additionally, socket-like (i.e. socket.io, firebase) solutions which listen to endless responses
+will remain alive during the whole execution of the app.
+
+```
+this.http.get('//localhost:3000').subscribe((val) => {
+  console.info(`[Foo-bad] Response: ${val}`);
+});
+```
+
+## License
+
+MIT © Gerard Rovira Sánchez
