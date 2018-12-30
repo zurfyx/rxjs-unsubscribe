@@ -7,10 +7,4 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'rxjs-unsubscribe';
-
-  constructor(private http: HttpClient) {}
-
-  ngOnInit()  {
-    this.http.
-  }
 }
